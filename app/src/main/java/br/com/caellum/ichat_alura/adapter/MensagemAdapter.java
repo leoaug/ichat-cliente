@@ -72,7 +72,6 @@ public class MensagemAdapter extends BaseAdapter {
          */
         if(idDoCliente == mensagem.getId()) {
             texto.setGravity(Gravity.RIGHT);
-            texto.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
         } else {
             linha.setBackgroundColor(Color.CYAN);
         }

@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.iv_avatar_usuario)
     public ImageView avatar;
 
-    private int idDocliente = new Random().nextInt();
+    private int idDocliente;
 
     @Inject
     public ChatService chatService;
@@ -73,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
        try {
+
+           idDocliente = new Random().nextInt();
 
            ButterKnife.bind(this);
 
