@@ -1,6 +1,9 @@
 package br.com.caellum.ichat_alura.activity;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -67,46 +70,80 @@ public class MainActivity extends AppCompatActivity {
     @Inject
     public EventBus eventBus;
 
+    private static final int RESULT_LOAD_IMAGE = 1;
+
+    private Uri imagemSelecionada;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-       try {
+        try {
+            idDocliente = new Random().nextInt();
+            ButterKnife.bind(this);
 
-           idDocliente = new Random().nextInt();
+            picasso.with(this).load("https://api.adorable.io/avatars/285/"+idDocliente+".png").into(avatar);
 
-           ButterKnife.bind(this);
+            ChatAplicacao app = (ChatAplicacao) getApplication();
+            chatComponente = app.getChatComponente();
+            chatComponente.inject(this);
 
-           picasso.with(this).load("https://api.adorable.io/avatars/285/"+idDocliente+".png").into(avatar);
-
-           ChatAplicacao app = (ChatAplicacao) getApplication();
-           chatComponente = app.getChatComponente();
-           chatComponente.inject(this);
-
-           /**
-            * caso tenha instancia (estado exista (ao virar o smartphone e etc)), carregar as mensagens
-            */
-           if(savedInstanceState != null) {
-               mensagens = (List<Mensagem>) savedInstanceState.getSerializable(ChatConstante.MENSANGENS);
-           } else {
-               mensagens  = new ArrayList<>();
-           }
+            /**
+             * caso tenha instancia (estado exista (ao virar o smartphone e etc)), carregar as mensagens
+             */
+            if(savedInstanceState != null) {
+                mensagens = (List<Mensagem>) savedInstanceState.getSerializable(ChatConstante.MENSANGENS);
+            } else {
+                mensagens  = new ArrayList<>();
+            }
 
 
-            MensagemAdapter adapter = new MensagemAdapter(1,mensagens,this);
+            MensagemAdapter adapter = new MensagemAdapter(idDocliente,imagemSelecionada,mensagens,this);
 
             listaDeMensagens.setAdapter(adapter);
 
 
-           Call<Mensagem> call = chatService.ouvirMensagem();
-           call.enqueue(new MensagemOuvirCallBack(eventBus,this));
+            Call<Mensagem> call = chatService.ouvirMensagem();
+            call.enqueue(new MensagemOuvirCallBack(eventBus,this));
 
-           eventBus.register(this);
+            eventBus.register(this);
 
 
         } catch (Exception e){
-             e.printStackTrace();
+            e.printStackTrace();
+        }
+    }
+
+    @OnClick(R.id.iv_avatar_usuario)
+    public void uploadImagemUsuario(){
+        try {
+            Intent i = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            startActivityForResult(i, RESULT_LOAD_IMAGE);
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        try {
+            switch(requestCode) {
+                case RESULT_LOAD_IMAGE:
+                    if(resultCode == RESULT_OK){
+                        imagemSelecionada = data.getData();
+                        if(imagemSelecionada != null){
+
+                            picasso.with(this).load(imagemSelecionada).into(avatar);
+                            /**
+                             * registrar o eventBus de novo para atualizar as msg
+                             */
+                            eventBus.register(this);
+                        }
+                    }
+            }
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
 
@@ -116,29 +153,21 @@ public class MainActivity extends AppCompatActivity {
             chatService.enviar(new Mensagem(idDocliente,editText.getText().toString())).enqueue(new MensagemEnviarCallBack());
             editText.getText().clear();
 
-            // palaa aqui!
             InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
             inputMethodManager.hideSoftInputFromWindow(editText.getWindowToken(),0);
 
-            /** pau aqui
-
-
-
-             * Esconde o teclado ao einvar a mensagem
-
-
- */
         } catch (Exception e){
             e.printStackTrace();
         }
     }
+
 
     @Subscribe
     public void colocaNaLista(MensagemEvento mensagemEvento) {
         try {
 
             mensagens.add(mensagemEvento.getMensagem());
-            MensagemAdapter adapter = new MensagemAdapter(idDocliente,mensagens,this);
+            MensagemAdapter adapter = new MensagemAdapter(idDocliente,imagemSelecionada,mensagens,this);
             listaDeMensagens.setAdapter(adapter);
 
         } catch (Exception e){

@@ -2,6 +2,7 @@ package br.com.caellum.ichat_alura.adapter;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.net.Uri;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +26,7 @@ public class MensagemAdapter extends BaseAdapter {
     private List<Mensagem> mensagens;
     private Activity activity;
     private int idDoCliente;
+    private Uri imagemSelecionada;
 
     @Inject
     public Picasso picasso;
@@ -35,10 +37,11 @@ public class MensagemAdapter extends BaseAdapter {
     @BindView(R.id.iv_avatar_mensagem)
     public ImageView avatar;
 
-    public MensagemAdapter(int idDoCliente,List <Mensagem> mensagens, Activity activity) {
+    public MensagemAdapter(int idDoCliente,Uri imagemSelecionada,List <Mensagem> mensagens, Activity activity) {
         this.mensagens = mensagens;
         this.activity = activity;
         this.idDoCliente = idDoCliente;
+        this.imagemSelecionada = imagemSelecionada;
     }
 
     @Override
@@ -65,15 +68,22 @@ public class MensagemAdapter extends BaseAdapter {
 
         Mensagem mensagem = (Mensagem) getItem(position);
 
-        picasso.with(activity).load("https://api.adorable.io/avatars/285/"+mensagem.getId()+".png").into(avatar);
-
+        /*
+        if(imagemSelecionada == null) {
+            picasso.with(activity).load("https://api.adorable.io/avatars/285/" + mensagem.getId() + ".png").into(avatar);
+        } else {
+            picasso.with(activity).load(imagemSelecionada).into(avatar);
+        }
+        */
         /**
          * caso a mensagem seja do usuario corrente(logado)
          */
-        if(idDoCliente == mensagem.getId()) {
+        if(idDoCliente == mensagem.getId() && imagemSelecionada != null) {
             texto.setGravity(Gravity.RIGHT);
+            picasso.with(activity).load(imagemSelecionada).into(avatar);
         } else {
             linha.setBackgroundColor(Color.CYAN);
+            picasso.with(activity).load("https://api.adorable.io/avatars/285/" + mensagem.getId() + ".png").into(avatar);
         }
 
 
